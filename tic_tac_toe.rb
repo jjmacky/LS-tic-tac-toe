@@ -420,7 +420,6 @@ end
 def collect_player_info(num_players)
   players = {}
   1.upto(num_players).each do |player|
-
     prompt("Let's get some player info!")
     type = PLAYER_TYPES[player_type.to_i]
     player_name = player_name(players, player, type)
@@ -434,12 +433,12 @@ def collect_player_info(num_players)
 end
 
 loop do
-board = create_board
-num_players = num_players(board)
-players = collect_player_info(num_players)
-game_intro(board, players)
-system 'clear'
-print_visual_board(board)
+  board = create_board
+  num_players = num_players(board)
+  players = collect_player_info(num_players)
+  game_intro(board, players)
+  system 'clear'
+  print_visual_board(board)
 
   loop do
     players.each_pair do |player, value|
