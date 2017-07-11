@@ -26,13 +26,13 @@ def create_board
   Array.new(board_size) { Array.new(board_size) }
 end
 
-def row_winner(board, marker)
+def row_winner?(board, marker)
   board.any? do |row|
     row.all? { |i| i == marker }
   end
 end
 
-def column_winner(board, marker)
+def column_winner?(board, marker)
   0.upto(board.size - 1).any? do |col|
     0.upto(board.size - 1).all? do |row|
       board[row][col] == marker
@@ -40,7 +40,7 @@ def column_winner(board, marker)
   end
 end
 
-def diag_winner(board, marker)
+def diag_winner?(board, marker)
   left_to_right =
     0.upto(board.size - 1).all? do |i|
       board[i][i] == marker
@@ -58,9 +58,9 @@ def get_winner(board, players)
   winner =
     players.each_key.select do |player|
       marker = players[player][:marker]
-      row_winner(board, marker) ||
-        column_winner(board, marker) ||
-        diag_winner(board, marker)
+      row_winner?(board, marker) ||
+        column_winner?(board, marker) ||
+        diag_winner?(board, marker)
     end
   winner.first
 end
@@ -105,7 +105,7 @@ def print_visual_board(board)
   0.upto(max_row_index).each do |row|
     0.upto(max_col_index).each do |col|
       element = board[row][col]
-      if !element.nil?
+      unless element.nil?
         place_visual_piece(visual_board, row, col, element)
       end
     end
@@ -131,11 +131,19 @@ def int?(number)
   number == number.to_i.to_s
 end
 
+def valid_row?(board, row)
+  row.to_i <= board.size
+end
+
+def valid_col?(board, col)
+  col.to_i <= board.size
+end
+
 def valid_square?(board, row, col)
   int?(row) &&
     int?(col) &&
-    row.to_i - 1 <= board.size - 1 &&
-    col.to_i - 1 <= board.size - 1
+    valid_row?(board, row) &&
+    valid_col?(board, col)
 end
 
 def empty_square?(board, row, col)
@@ -144,6 +152,7 @@ end
 
 def board_full?(board)
   return true unless board.flatten.any?(&:nil?)
+  false
 end
 
 def place_piece(board, row, col, marker)
@@ -157,18 +166,24 @@ def valid_num_players?(board, num_players)
     num_players.to_i <= max_num_players
 end
 
+def empty_string?(string)
+  string.split.all? { |s| s == ' ' }
+end
+
 def valid_marker?(marker, players)
   marker.length == 1 &&
+    !empty_string?(marker) &&
     !get_player_markers(players).include?(marker)
 end
 
 def valid_name?(name, players)
   name.length >= 1 &&
+    !empty_string?(name) &&
     !players.keys.include?(name)
 end
 
 def get_player_markers(players)
-  players.map do |_, value|
+  players.values.map do |value|
     value[:marker]
   end
 end
@@ -432,6 +447,24 @@ def collect_player_info(num_players)
   players
 end
 
+def user_selection(board, player)
+  prompt("#{player} it's your turn.")
+  row = ''
+  col = ''
+  loop do
+    prompt("Enter row:")
+    row = gets.chomp
+    prompt("Enter col:")
+    col = gets.chomp
+    if  valid_square?(board, row, col) &&
+        empty_square?(board, row.to_i - 1, col.to_i - 1)
+      break
+    end
+    prompt("Sorry, choose another square.")
+  end
+  [row.to_i - 1, col.to_i - 1]
+end
+
 loop do
   board = create_board
   num_players = num_players(board)
@@ -443,21 +476,8 @@ loop do
   loop do
     players.each_pair do |player, value|
       if value[:type] == 'human'
-        prompt("#{player} it's your turn.")
-        row = ''
-        col = ''
-        loop do
-          prompt("Enter row:")
-          row = gets.chomp
-          prompt("Enter col:")
-          col = gets.chomp
-          if  valid_square?(board, row, col) &&
-              empty_square?(board, row.to_i - 1, col.to_i - 1)
-            break
-          end
-          prompt("Sorry, choose another square.")
-        end
-        place_piece(board, row.to_i - 1, col.to_i - 1, value[:marker])
+        row, col = user_selection(board, player)
+        place_piece(board, row, col, value[:marker])
 
       else
         player_marker = [value[:marker]]
