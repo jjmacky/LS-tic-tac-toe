@@ -447,6 +447,11 @@ def collect_player_info(num_players)
   players
 end
 
+def valid_selection?(board, row, col)
+  valid_square?(board, row, col) &&
+    empty_square?(board, row.to_i - 1, col.to_i - 1)
+end
+
 def user_selection(board, player)
   prompt("#{player} it's your turn.")
   row = ''
@@ -456,10 +461,7 @@ def user_selection(board, player)
     row = gets.chomp
     prompt("Enter col:")
     col = gets.chomp
-    if  valid_square?(board, row, col) &&
-        empty_square?(board, row.to_i - 1, col.to_i - 1)
-      break
-    end
+    break if valid_selection?(board, row, col)
     prompt("Sorry, choose another square.")
   end
   [row.to_i - 1, col.to_i - 1]
@@ -477,14 +479,12 @@ loop do
     players.each_pair do |player, value|
       if value[:type] == 'human'
         row, col = user_selection(board, player)
-        place_piece(board, row, col, value[:marker])
-
       else
         player_marker = [value[:marker]]
         other_markers = get_player_markers(players) - player_marker
         row, col = computer_ai(board, other_markers, player_marker)
-        place_piece(board, row, col, value[:marker])
       end
+      place_piece(board, row, col, value[:marker])
 
       system 'clear'
       print_visual_board(board)
